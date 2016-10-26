@@ -1,0 +1,78 @@
+﻿<Page
+    x:Class="CheckPointApplication.MainPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:CheckPointApplication"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:Maps ="using:Windows.UI.Xaml.Controls.Maps"  
+    xmlns:data="using:CheckPointApplication.Model"
+    mc:Ignorable="d">
+    <Page.Resources >
+        <ResourceDictionary >
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="MapDictionary.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Page.Resources>
+
+    <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="4*"/>
+            <RowDefinition Height="1*"/>
+        </Grid.RowDefinitions>
+        <Maps:MapControl Name="MapControl" 
+                         MapServiceToken="{StaticResource SeriversToken}"
+                         MapTapped="MapControl_MapTapped" 
+                         ZoomLevel="{Binding ElementName=level,Path=Value,Mode=TwoWay}" >
+            <Maps:MapItemsControl ItemsSource="{Binding}">
+                <Maps:MapItemsControl.ItemTemplate>
+                    <DataTemplate >
+                        <Button  x:Name="mapItemButton" Click="mapItemButton_Click" Background="Transparent">
+                            <StackPanel>
+                                <Border Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+                                    <TextBlock Text="{Binding  DisplayName}"/>
+                                </Border>
+                                <Image Source="{Binding ImageSourceUri}"
+                                       Maps:MapControl.Location="{Binding Location}" 
+                                               >
+                                    <Image.Transitions>
+                                        <TransitionCollection>
+                                            <EntranceThemeTransition/>
+                                        </TransitionCollection>
+                                    </Image.Transitions>
+                                </Image>
+                            </StackPanel>
+                        </Button>
+                    </DataTemplate>
+                </Maps:MapItemsControl.ItemTemplate>
+            </Maps:MapItemsControl>
+            
+        </Maps:MapControl>
+        <RelativePanel Grid.Row="1" >
+            <Slider x:Name="level" Header="Level" Height="60" Width="150" Value="12" Maximum="20" />
+            <TextBlock Name="LengthLable" RelativePanel.RightOf="level" Height="30" Width="100" Margin="10,25" TextAlignment="Center"/>
+            <StackPanel RelativePanel.Below="level" Orientation="Horizontal">
+                <Button  Name="GetLcoal"
+                     Content="Lcoal" 
+                     Click="GetLcoal_Click" 
+                     Margin="10"/>
+                <Button Name="GetStreetside" 
+                        Content="GetStreet"
+                        Click="GetStreetside_Click"
+                        Margin="10"/>
+                <Button Name="Map3D" Content="3D" Click="Map3D_Click" Margin="10"/>
+                <Button Name="weilan" Content="gefence" Click="weilan_Click" Margin="10"/>
+                <ComboBox x:Name="MapStyleSelect" SelectionChanged="MapStyle_SelectionChanged" Margin="10">
+                    <x:String>Select 1</x:String>
+                    <x:String>Select 2</x:String>
+                    <x:String>Select 3</x:String>
+                    <x:String>Select 4</x:String>
+                </ComboBox>
+
+            </StackPanel>
+
+        </RelativePanel>
+    </Grid>
+
+</Page>

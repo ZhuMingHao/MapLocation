@@ -1,0 +1,8 @@
+﻿<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" 
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:CheckPointApplication">
+    <x:String x:Key="SeriversToken">
+        RhDntSzcwUCARbSzOk8N~LjoVCpIAxJyabXwyYSL2mw~Asz_4gv_wNboJ0N9nqW8hFBGBriGg8a4Poc7Xowz1S3dgNx9AKWGqXFKy8F8rkG5
+    </x:String>
+</ResourceDictionary>
