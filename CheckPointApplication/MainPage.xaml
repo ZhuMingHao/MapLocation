@@ -21,21 +21,28 @@
             <RowDefinition Height="4*"/>
             <RowDefinition Height="1*"/>
         </Grid.RowDefinitions>
-        <Maps:MapControl Name="MapControl" 
+        <Maps:MapControl Name="MapControl"
                          MapServiceToken="{StaticResource SeriversToken}"
                          MapTapped="MapControl_MapTapped" 
-                         ZoomLevel="{Binding ElementName=level,Path=Value,Mode=TwoWay}" >
+                         ZoomLevel="{Binding ElementName=level,Path=Value,Mode=TwoWay}"
+                          >
+            
+            
             <Maps:MapItemsControl ItemsSource="{Binding}">
+            
                 <Maps:MapItemsControl.ItemTemplate>
-                    <DataTemplate >
-                        <Button  x:Name="mapItemButton" Click="mapItemButton_Click" Background="Transparent">
+                    <DataTemplate  >
+                        <Button  
+                                 Name="mapItemButton" 
+                                 Click="mapItemButton_Click"  
+                                 Maps:MapControl.Location="{Binding Location}"
+                                 Background="Transparent">
                             <StackPanel>
                                 <Border Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
                                     <TextBlock Text="{Binding  DisplayName}"/>
                                 </Border>
-                                <Image Source="{Binding ImageSourceUri}"
-                                       Maps:MapControl.Location="{Binding Location}" 
-                                               >
+                                <Image  
+                                    Source="{Binding ImageSourceUri}">
                                     <Image.Transitions>
                                         <TransitionCollection>
                                             <EntranceThemeTransition/>
@@ -47,7 +54,7 @@
                     </DataTemplate>
                 </Maps:MapItemsControl.ItemTemplate>
             </Maps:MapItemsControl>
-            
+
         </Maps:MapControl>
         <RelativePanel Grid.Row="1" >
             <Slider x:Name="level" Header="Level" Height="60" Width="150" Value="12" Maximum="20" />
@@ -69,7 +76,6 @@
                     <x:String>Select 3</x:String>
                     <x:String>Select 4</x:String>
                 </ComboBox>
-
             </StackPanel>
 
         </RelativePanel>
