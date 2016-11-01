@@ -67,8 +67,8 @@ namespace CheckPointApplication
                    Geoposition pos = await geolocator.GetGeopositionAsync();
                     var accuracyRadiusMeters = pos.Coordinate.Accuracy;
                     MapPolygon mapPolygon = new MapPolygon();
-                  
 
+                 //   https://msdn.microsoft.com/zh-cn/library/windows/apps/jj735578(v=vs.105).aspx
                     geolocator.PositionChanged += Geolocator_PositionChanged;
                     geolocator.StatusChanged += Geolocator_StatusChanged;
                     Geopoint myLocation = pos.Coordinate.Point;
