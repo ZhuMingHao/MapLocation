@@ -15,25 +15,20 @@
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Page.Resources>
-
     <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
         <Grid.RowDefinitions>
-            <RowDefinition Height="4*"/>
+            <RowDefinition Height="2*"/>
             <RowDefinition Height="1*"/>
         </Grid.RowDefinitions>
-        <Maps:MapControl Name="MapControl"
+        <Maps:MapControl Name="MapControl"                       
                          MapServiceToken="{StaticResource SeriversToken}"
                          MapTapped="MapControl_MapTapped" 
                          ZoomLevel="{Binding ElementName=level,Path=Value,Mode=TwoWay}"
                           >
-
-
-            <Maps:MapItemsControl ItemsSource="{Binding}" Maps:MapControl.NormalizedAnchorPoint="0.5,1.0">
-
+            <Maps:MapItemsControl ItemsSource="{Binding}" >
                 <Maps:MapItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <Button  
-                                 Name="mapItemButton" 
+                        <Button  Name="mapItemButton" 
                                  Click="mapItemButton_Click"  
                                  Maps:MapControl.Location="{Binding Location}"
                                  Background="Transparent">
@@ -54,11 +49,16 @@
                     </DataTemplate>
                 </Maps:MapItemsControl.ItemTemplate>
             </Maps:MapItemsControl>
-
         </Maps:MapControl>
         <RelativePanel Grid.Row="1" >
             <Slider x:Name="level" Header="Level" Height="60" Width="150" Value="12" Maximum="20" />
             <TextBlock Name="LengthLable" RelativePanel.RightOf="level" Height="30" Width="100" Margin="10,25" TextAlignment="Center"/>
+            <ComboBox x:Name="MapStyleSelect" SelectionChanged="MapStyle_SelectionChanged" Margin="10,20" RelativePanel.RightOf="LengthLable">
+                <x:String>矩形</x:String>
+                <x:String>线</x:String>
+                <x:String>注册后台</x:String>
+                <x:String>Select 4</x:String>
+            </ComboBox>
             <StackPanel RelativePanel.Below="level" Orientation="Horizontal">
                 <Button  Name="GetLcoal"
                      Content="Lcoal" 
@@ -70,14 +70,8 @@
                         Margin="10"/>
                 <Button Name="Map3D" Content="3D" Click="Map3D_Click" Margin="10"/>
                 <Button Name="weilan" Content="gefence" Click="weilan_Click" Margin="10"/>
-                <ComboBox x:Name="MapStyleSelect" SelectionChanged="MapStyle_SelectionChanged" Margin="10">
-                    <x:String>矩形</x:String>
-                    <x:String>线</x:String>
-                    <x:String>注册后台</x:String>
-                    <x:String>Select 4</x:String>
-                </ComboBox>
+               
             </StackPanel>
-
         </RelativePanel>
     </Grid>
 

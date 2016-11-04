@@ -11,8 +11,10 @@ using Windows.Storage;
 using Windows.Devices.Geolocation;
 using Windows.UI.Notifications;
 using Windows.Data.Json;
-using System.IO;
+
 using System.Runtime.InteropServices;
+using Microsoft.Win32.SafeHandles;
+using System.IO;
 
 namespace BackgroundTask.Core
 {
@@ -21,17 +23,54 @@ namespace BackgroundTask.Core
         private ObservableCollection<string> _geofenceBackgroundEvents = null;
         private const long oneHundredNanosecondsPerSecond = 10000000;
         private const int maxEventDescriptors = 42;
-
         public BackgroundCore()
         {
             _geofenceBackgroundEvents = new ObservableCollection<string>();
         }
 
         public void Run(IBackgroundTaskInstance taskInstance)
-        {//  var CreateFileW =  new DllImportAttribute("kernel32");
-         //  DefaultDllImportSearchPathsAttribute("kernel32");
+        {
 
-            BackgroundTaskDeferral deferral = taskInstance.GetDeferral();
+            //var handle = CreateFile(@"\\.\pipe\mypipe", FileAccess.ReadWrite, FileShare.None, IntPtr.Zero, FileMode.Open, 0, IntPtr.Zero);
+            //if (handle.IsInvalid)
+            //{
+            //    var err = Marshal.GetLastWin32Error();
+            //}
+            //var sw = new StreamWriter(new FileStream(handle, FileAccess.Write), Encoding.UTF8);
+            //sw.WriteLine("hello");
+            //sw.Flush();
+
+            //public struct COPYDATASTRUCT
+            //                    {
+            //                        public IntPtr dwData;
+            //                        public int cbData;
+            //                        [MarshalAs(UnmanagedType.LPStr)]
+            //                        public string lpData;
+            //                    }
+            //[DllImport("User32.dll", EntryPoint = "SendMessage")]
+            //            private static extern int SendMessage(
+            //    int hWnd, // handle to destination window
+            //    int Msg, // message
+            //    int wParam, // first message parameter
+            //    ref COPYDATASTRUCT lParam // second message parameter
+            //        );
+            //[DllImport("User32.dll", EntryPoint = "FindWindow")]
+            //private static extern int FindWindow(string lpClassName, string
+            //lpWindowName);
+
+            //[DllImport("kernel32.dll")]
+            //public static extern SafeFileHandle CreateFile(
+            //        string lpFileName,
+            //        FileAccess Access,
+            //        FileShare ShareMode,
+            //        IntPtr SecurityAttributes,
+            //        FileMode CreationDisposition,
+            //        uint FlagsAndAttributes,
+            //        IntPtr hTemplateFile
+            //        );
+
+
+        BackgroundTaskDeferral deferral = taskInstance.GetDeferral();
 
             try
             {
@@ -240,7 +279,6 @@ namespace BackgroundTask.Core
 
             _geofenceBackgroundEvents.Insert(0, eventDescription);
         }
-
 
 
     }

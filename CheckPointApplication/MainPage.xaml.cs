@@ -102,8 +102,7 @@ namespace CheckPointApplication
                     //if (map_focus == null)
                     //{
                     //    AddMapIcon(myLocation, MapControl);
-                    //}
-
+                    //}               
                     // Set the map location.
                     //MapControl.Center = myLocation;
                     //MapControl.ZoomLevel = 12;
@@ -253,7 +252,7 @@ namespace CheckPointApplication
             }
 
         }
-
+       
         //注册后台任务
         private async void RegisterTask()
         {
