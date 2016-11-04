@@ -27,28 +27,52 @@ using Windows.ApplicationModel.Background;
 using BackgroundTask.Core;
 using Windows.Storage;
 using System.Text;
+using Windows.UI.Xaml.Shapes;
+using System.Xml.Linq;
+
+
+
 
 // The Blank Page item template is documented at http://go.microsoft.com/fwlink/?LinkId=402352&clcid=0x409
 
 namespace CheckPointApplication
 {
+
     /// <summary>
     /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
     public sealed partial class MainPage : Page
     {
 
-
         private List<Geopoint> locs = new List<Geopoint>();
         private ObservableCollection<PointOfInterest> list;
         private PointOfInterestsManager viewModel;
         private Geopoint OwnLocation { get; set; }
         private static MapIcon map_focus;
+        private CoreWindow coreWindow;
         public MainPage()
         {
+            coreWindow = CoreWindow.GetForCurrentThread();
+            coreWindow.VisibilityChanged += CoreWindow_VisibilityChanged;
+
+
             this.InitializeComponent();
             viewModel = new PointOfInterestsManager();
             MapIcon mapIcon1 = new MapIcon();
+        }
+
+        private void CoreWindow_VisibilityChanged(CoreWindow sender, VisibilityChangedEventArgs args)
+        {
+            if (args.Visible)
+            {
+                GeofenceMonitor.Current.GeofenceStateChanged += Current_GeofenceStateChanged;
+                GeofenceMonitor.Current.StatusChanged += Current_StatusChanged;
+            }
+            else
+            {
+                GeofenceMonitor.Current.GeofenceStateChanged -= Current_GeofenceStateChanged;
+                GeofenceMonitor.Current.StatusChanged -= Current_StatusChanged;
+            }
         }
 
         private async void GetLcoal_Click(object sender, RoutedEventArgs e)
@@ -63,19 +87,18 @@ namespace CheckPointApplication
                     // Get the current location.
                     Geolocator geolocator = new Geolocator();
                     geolocator.DesiredAccuracy = PositionAccuracy.High;
-                   
-                   Geoposition pos = await geolocator.GetGeopositionAsync();
+                    Geoposition pos = await geolocator.GetGeopositionAsync();
+                    Geocoordinate myGeocoordinate = pos.Coordinate;
                     var accuracyRadiusMeters = pos.Coordinate.Accuracy;
-                    MapPolygon mapPolygon = new MapPolygon();
 
-                 //   https://msdn.microsoft.com/zh-cn/library/windows/apps/jj735578(v=vs.105).aspx
-                    geolocator.PositionChanged += Geolocator_PositionChanged;
-                    geolocator.StatusChanged += Geolocator_StatusChanged;
                     Geopoint myLocation = pos.Coordinate.Point;
                     OwnLocation = myLocation;
                     MapControl.LandmarksVisible = true;
                     await MapControl.TrySetViewAsync(myLocation, 12);
+                    AddMapCicle(accuracyRadiusMeters * 0.0000001);
 
+                    geolocator.PositionChanged += Geolocator_PositionChanged;
+                    geolocator.StatusChanged += Geolocator_StatusChanged;
                     //if (map_focus == null)
                     //{
                     //    AddMapIcon(myLocation, MapControl);
@@ -234,6 +257,7 @@ namespace CheckPointApplication
         //注册后台任务
         private async void RegisterTask()
         {
+           
             var trigger = new LocationTrigger(LocationTriggerType.Geofence);
             var task = await App.RegisterBackgroundTask(typeof(BackgroundCore), "LocationTask", trigger, null);
             task.Progress += Task_Progress;
@@ -262,14 +286,14 @@ namespace CheckPointApplication
 
                         // Do your app work here.
 
-                        Debug.Write("------++++++++++++++++++-------");
+                        showMessage("围栏过期");
 
                     }
                     catch (Exception ex)
                     {
                         // The background task had an error.
                         //  rootPage.NotifyUser(ex.ToString(), NotifyType.ErrorMessage);
-                        Debug.Write("---------------------");
+                        Debug.Write(ex.Message);
                     }
                 });
             }
@@ -280,7 +304,29 @@ namespace CheckPointApplication
         {
             throw new NotImplementedException();
         }
+        private async void AddMapCicle(double ri)
+        {
+            double centerLatitude = MapControl.Center.Position.Latitude;
+            double centerLongitude = MapControl.Center.Position.Longitude;
+            MapPolygon mapPolygon = new MapPolygon();
+            List<BasicGeoposition> list = new List<BasicGeoposition>();
 
+            for (var i = 0; i < 100; i++)
+            {
+                //画圆算法
+                BasicGeoposition point = new BasicGeoposition() { Latitude = centerLatitude + ri * Math.Cos(3.6 * i * 3.14 / 180), Longitude = centerLongitude + ri * Math.Sin(3.6 * i * 3.14 / 180) };
+                list.Add(point);
+
+            }
+            mapPolygon.Path = new Geopath(list);
+            mapPolygon.ZIndex = 2;
+            mapPolygon.FillColor = Colors.Blue;
+            mapPolygon.StrokeColor = Colors.Gray;
+            mapPolygon.StrokeThickness = 1;
+            mapPolygon.StrokeDashed = false;
+            MapControl.MapElements.Add(mapPolygon);
+            await MapControl.TryZoomToAsync(17);
+        }
         private async void AddMapPolygon()
         {
             double centerLatitude = MapControl.Center.Position.Latitude;
@@ -291,17 +337,15 @@ namespace CheckPointApplication
          new BasicGeoposition() {Latitude=centerLatitude-0.0005, Longitude=centerLongitude-0.001 },
          new BasicGeoposition() {Latitude=centerLatitude-0.0005, Longitude=centerLongitude+0.001 },
          new BasicGeoposition() {Latitude=centerLatitude+0.0005, Longitude=centerLongitude+0.001 },
-
    });
-
             mapPolygon.ZIndex = 1;
             mapPolygon.FillColor = Colors.Red;
             mapPolygon.StrokeColor = Colors.Blue;
             mapPolygon.StrokeThickness = 3;
             mapPolygon.StrokeDashed = false;
             MapControl.MapElements.Add(mapPolygon);
+        
             await MapControl.TryZoomToAsync(17);
-
         }
         private async void AddMapLine()
         {
@@ -322,7 +366,6 @@ namespace CheckPointApplication
         }
         private async Task<Geopoint> GetGeopoint(string address)
         {
-
             //获取最近的坐标点
             BasicGeoposition queryHint = new BasicGeoposition();
             queryHint.Latitude = 47.643;
@@ -378,7 +421,6 @@ namespace CheckPointApplication
                 StringBuilder routeInfo = new StringBuilder();
 
                 //Driving route leg 
-
                 foreach (MapRouteLeg leg in routeResult.Route.Legs)
                 {
                     foreach (MapRouteManeuver maneuver in leg.Maneuvers)
@@ -388,181 +430,187 @@ namespace CheckPointApplication
                 }
 
                 // Load the text box.
-               // tbOutputText.Text = routeInfo.ToString();
+                // tbOutputText.Text = routeInfo.ToString();
             }
             else
             {
-              //  tbOutputText.Text =
-                     // "A problem occurred: " + routeResult.Status.ToString();
+                //  tbOutputText.Text =
+                // "A problem occurred: " + routeResult.Status.ToString();
             }
-
-        
-
-    }
-
-    private void mapItemButton_Click(object sender, RoutedEventArgs e)
-    {
-
-    }
-    private void MapDataSource()
-    {
-        HttpMapTileDataSource dataSource = new HttpMapTileDataSource("http://map.baidu.com/z={4}&x={0}&y={0}");
-        MapTileSource titleSource = new MapTileSource(dataSource);
-        MapControl.TileSources.Add(titleSource);
-    }
-    private async void weilan_Click(object sender, RoutedEventArgs e)
-    {
-        var accessStatus = await Geolocator.RequestAccessAsync();
-        switch (accessStatus)
-        {
-            case GeolocationAccessStatus.Allowed:
-                Geofence geofence = CreatGeofence(OwnLocation.Position);
-                IList<Geofence> geos = GeofenceMonitor.Current.Geofences;
-                geos.Add(geofence);
-                //  FillRegisteredGeofenceListBoxWithExistingGeofences();
-                // FillEventListBoxWithExistingEvents();
-
-                // Register for state change events.
-                //围栏触发事件
-                GeofenceMonitor.Current.GeofenceStateChanged += Current_GeofenceStateChanged;
-
-                //位置权限更改
-                GeofenceMonitor.Current.StatusChanged += Current_StatusChanged;
-                break;
-
-            case GeolocationAccessStatus.Denied:
-                // _rootPage.NotifyUser("Access denied.", NotifyType.ErrorMessage);
-                break;
-
-            case GeolocationAccessStatus.Unspecified:
-                //_rootPage.NotifyUser("Unspecified error.", NotifyType.ErrorMessage);
-                break;
 
         }
-    }
-    private Geofence CreatGeofence(BasicGeoposition position)
-    {
-        string fenceId = "fence8";
 
-        // Define the fence location and radius.
-        //BasicGeoposition position;
-        //position.Latitude = 47.6510;
-        //position.Longitude = -122.3473;
-        //position.Altitude = 0.0;
-        double radius = 100000; // in meters
-                                // Set the circular region for geofence.
-        Geocircle geocircle = new Geocircle(position, radius);
-        // Remove the geofence after the first trigger.
-        bool singleUse = true;
-        // Set the monitored states.
-        MonitoredGeofenceStates monitoredStates =
-                        MonitoredGeofenceStates.Entered |
-                        MonitoredGeofenceStates.Exited |
-                        MonitoredGeofenceStates.Removed;
-
-        // Set how long you need to be in geofence for the enter event to fire.
-        TimeSpan dwellTime = TimeSpan.FromMinutes(1);
-
-        // Set how long the geofence should be active.
-        TimeSpan duration = TimeSpan.FromDays(1);
-
-        // Set up the start time of the geofence.
-        DateTimeOffset startTime = DateTime.Now;
-
-        // Create the geofence.
-        Geofence geofence = new Geofence(fenceId, geocircle, monitoredStates, singleUse, dwellTime, startTime, duration);
-        return geofence;
-    }
-
-    //位置权限更改委托
-    private async void Current_StatusChanged(GeofenceMonitor sender, object args)
-    {
-        await Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
+        private void mapItemButton_Click(object sender, RoutedEventArgs e)
         {
-            // Show the location setting message only if the status is disabled.
-            // LocationDisabledMessage.Visibility = Visibility.Collapsed;
 
-            switch (sender.Status)
-            {
-                case GeofenceMonitorStatus.Ready:
-                    // _rootPage.NotifyUser("The monitor is ready and active.", NotifyType.StatusMessage);
-                    break;
-
-                case GeofenceMonitorStatus.Initializing:
-                    //  _rootPage.NotifyUser("The monitor is in the process of initializing.", NotifyType.StatusMessage);
-                    break;
-
-                case GeofenceMonitorStatus.NoData:
-                    //  _rootPage.NotifyUser("There is no data on the status of the monitor.", NotifyType.ErrorMessage);
-                    break;
-
-                case GeofenceMonitorStatus.Disabled:
-                    //  _rootPage.NotifyUser("Access to location is denied.", NotifyType.ErrorMessage);
-
-                    // Show the message to the user to go to the location settings.
-                    //   LocationDisabledMessage.Visibility = Visibility.Visible;
-                    break;
-
-                case GeofenceMonitorStatus.NotInitialized:
-                    //  _rootPage.NotifyUser("The geofence monitor has not been initialized.", NotifyType.StatusMessage);
-                    break;
-
-                case GeofenceMonitorStatus.NotAvailable:
-                    //   _rootPage.NotifyUser("The geofence monitor is not available.", NotifyType.ErrorMessage);
-                    break;
-
-                default:
-                    //  ScenarioOutput_Status.Text = "Unknown";
-                    // _rootPage.NotifyUser(string.Empty, NotifyType.StatusMessage);
-                    break;
-            }
-        });
-
-    }
-    //围栏被触发委托
-    private async void Current_GeofenceStateChanged(GeofenceMonitor sender, object args)
-    {
-        var reports = sender.ReadReports();
-
-        await Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
+        }
+        private void MapDataSource()
         {
-            foreach (GeofenceStateChangeReport report in reports)
+            HttpMapTileDataSource dataSource = new HttpMapTileDataSource("http://map.baidu.com/z={4}&x={0}&y={0}");
+            MapTileSource titleSource = new MapTileSource(dataSource);
+            MapControl.TileSources.Add(titleSource);
+        }
+        private async void weilan_Click(object sender, RoutedEventArgs e)
+        {
+            var accessStatus = await Geolocator.RequestAccessAsync();
+            switch (accessStatus)
             {
-                GeofenceState state = report.NewState;
+                case GeolocationAccessStatus.Allowed:
+                    Geofence geofence = CreatGeofence(OwnLocation.Position);
+                    IList<Geofence> geos = GeofenceMonitor.Current.Geofences;
+                    geos.Clear();
+                    geos.Add(geofence);
+                    //  FillRegisteredGeofenceListBoxWithExistingGeofences();
+                    // FillEventListBoxWithExistingEvents();
+                    // Register for state change events.
+                    //围栏触发事件
+                   // GeofenceMonitor.Current.GeofenceStateChanged += Current_GeofenceStateChanged;
 
-                Geofence geofence = report.Geofence;
+                    //位置权限更改
+                  //  GeofenceMonitor.Current.StatusChanged += Current_StatusChanged;
+                    break;
 
-                if (state == GeofenceState.Removed)
-                {
-                    // Remove the geofence from the geofences collection.
-                    GeofenceMonitor.Current.Geofences.Remove(geofence);
-                }
-                else if (state == GeofenceState.Entered)
-                {
-                    // Your app takes action based on the entered event.
+                case GeolocationAccessStatus.Denied:
+                    // _rootPage.NotifyUser("Access denied.", NotifyType.ErrorMessage);
+                    break;
 
-                    // NOTE: You might want to write your app to take a particular
-                    // action based on whether the app has internet connectivity.
+                case GeolocationAccessStatus.Unspecified:
+                    //_rootPage.NotifyUser("Unspecified error.", NotifyType.ErrorMessage);
+                    break;
 
-                }
-                else if (state == GeofenceState.Exited)
-                {
-                    // Your app takes action based on the exited event.
-
-                    // NOTE: You might want to write your app to take a particular
-                    // action based on whether the app has internet connectivity.
-                }
             }
-        });
-    }
+        }
+       
+        private Geofence CreatGeofence(BasicGeoposition position)
+        {
+            string fenceId = "fence";
+            // Define the fence location and radius.
+            //BasicGeoposition position;
+            //position.Latitude = 47.6510;
+            //position.Longitude = -122.3473;
+            //position.Altitude = 0.0;
+            double radius = 100000; // in meters
+            // Set the circular region for geofence.
+            Geocircle geocircle = new Geocircle(position, radius);
+            // Remove the geofence after the first trigger.
+            bool singleUse = true;
+            // Set the monitored states.
+            MonitoredGeofenceStates monitoredStates =
+                            MonitoredGeofenceStates.Entered |
+                            MonitoredGeofenceStates.Exited |
+                            MonitoredGeofenceStates.Removed;
+            // Set how long you need to be in geofence for the enter event to fire.
+            TimeSpan dwellTime = TimeSpan.FromMinutes(1);
+           
+            // Set how long the geofence should be active.
+            TimeSpan duration = TimeSpan.FromDays(1);
+           
+            // Set up the start time of the geofence.
+            DateTimeOffset startTime = DateTime.Now;
 
-    //离开界面是注销服务
-    protected override void OnNavigatingFrom(NavigatingCancelEventArgs e)
-    {
-        GeofenceMonitor.Current.GeofenceStateChanged -= Current_GeofenceStateChanged;
-        GeofenceMonitor.Current.StatusChanged -= Current_StatusChanged;
+            // Create the geofence.
+            Geofence geofence = new Geofence(fenceId, geocircle, monitoredStates, singleUse, dwellTime, startTime, duration);
+            return geofence;
+          
+        }
 
-        base.OnNavigatingFrom(e);
+        //位置权限更改委托
+        private async void Current_StatusChanged(GeofenceMonitor sender, object args)
+        {
+            await Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
+            {
+                // Show the location setting message only if the status is disabled.
+                // LocationDisabledMessage.Visibility = Visibility.Collapsed;
+
+                switch (sender.Status)
+                {
+                    case GeofenceMonitorStatus.Ready:
+                        // _rootPage.NotifyUser("The monitor is ready and active.", NotifyType.StatusMessage);
+                        break;
+
+                    case GeofenceMonitorStatus.Initializing:
+                        //  _rootPage.NotifyUser("The monitor is in the process of initializing.", NotifyType.StatusMessage);
+                        break;
+
+                    case GeofenceMonitorStatus.NoData:
+                        //  _rootPage.NotifyUser("There is no data on the status of the monitor.", NotifyType.ErrorMessage);
+                        break;
+
+                    case GeofenceMonitorStatus.Disabled:
+                        //  _rootPage.NotifyUser("Access to location is denied.", NotifyType.ErrorMessage);
+
+                        // Show the message to the user to go to the location settings.
+                        //   LocationDisabledMessage.Visibility = Visibility.Visible;
+                        break;
+
+                    case GeofenceMonitorStatus.NotInitialized:
+                        //  _rootPage.NotifyUser("The geofence monitor has not been initialized.", NotifyType.StatusMessage);
+                        break;
+
+                    case GeofenceMonitorStatus.NotAvailable:
+                        //   _rootPage.NotifyUser("The geofence monitor is not available.", NotifyType.ErrorMessage);
+                        break;
+
+                    default:
+                        //  ScenarioOutput_Status.Text = "Unknown";
+                        // _rootPage.NotifyUser(string.Empty, NotifyType.StatusMessage);
+                        break;
+                }
+            });
+
+        }
+        //围栏被触发委托
+        private async void Current_GeofenceStateChanged(GeofenceMonitor sender, object args)
+        {
+            var reports = sender.ReadReports();
+
+            await Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
+            {
+                foreach (GeofenceStateChangeReport report in reports)
+                {
+                    GeofenceState state = report.NewState;
+
+                    Geofence geofence = report.Geofence;
+
+                    if (state == GeofenceState.Removed)
+                    {
+                        // Remove the geofence from the geofences collection.
+                        GeofenceMonitor.Current.Geofences.Remove(geofence);
+                    }
+                    else if (state == GeofenceState.Entered)
+                    {
+                        // Your app takes action based on the entered event.
+
+                        // NOTE: You might want to write your app to take a particular
+                        // action based on whether the app has internet connectivity.
+
+                    }
+                    else if (state == GeofenceState.Exited)
+                    {
+                        // Your app takes action based on the exited event.
+
+                        // NOTE: You might want to write your app to take a particular
+                        // action based on whether the app has internet connectivity.
+                    }
+                }
+            });
+        }
+      //  XDocument.addEventListener("visibilitychange", onVisibilityChanged, false);
+
+
+        //离开界面是注销服务
+     
+    
+        private async void showMessage(string content)
+        {
+            ContentDialog message = new ContentDialog()
+            {
+                Title = "温馨提示",
+                Content = content,
+                PrimaryButtonText = "Ok"
+            };
+
+            await message.ShowAsync();
+        }
     }
-}
 }

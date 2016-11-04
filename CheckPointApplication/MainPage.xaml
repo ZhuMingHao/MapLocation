@@ -26,12 +26,12 @@
                          MapTapped="MapControl_MapTapped" 
                          ZoomLevel="{Binding ElementName=level,Path=Value,Mode=TwoWay}"
                           >
-            
-            
-            <Maps:MapItemsControl ItemsSource="{Binding}">
-            
+
+
+            <Maps:MapItemsControl ItemsSource="{Binding}" Maps:MapControl.NormalizedAnchorPoint="0.5,1.0">
+
                 <Maps:MapItemsControl.ItemTemplate>
-                    <DataTemplate  >
+                    <DataTemplate>
                         <Button  
                                  Name="mapItemButton" 
                                  Click="mapItemButton_Click"  
@@ -41,7 +41,7 @@
                                 <Border Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
                                     <TextBlock Text="{Binding  DisplayName}"/>
                                 </Border>
-                                <Image  
+                                <Image 
                                     Source="{Binding ImageSourceUri}">
                                     <Image.Transitions>
                                         <TransitionCollection>
@@ -71,9 +71,9 @@
                 <Button Name="Map3D" Content="3D" Click="Map3D_Click" Margin="10"/>
                 <Button Name="weilan" Content="gefence" Click="weilan_Click" Margin="10"/>
                 <ComboBox x:Name="MapStyleSelect" SelectionChanged="MapStyle_SelectionChanged" Margin="10">
-                    <x:String>Select 1</x:String>
-                    <x:String>Select 2</x:String>
-                    <x:String>Select 3</x:String>
+                    <x:String>矩形</x:String>
+                    <x:String>线</x:String>
+                    <x:String>注册后台</x:String>
                     <x:String>Select 4</x:String>
                 </ComboBox>
             </StackPanel>

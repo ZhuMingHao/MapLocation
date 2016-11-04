@@ -66,7 +66,7 @@ namespace CheckPointApplication
                                                                        IBackgroundTrigger trigger,
                                                                        IBackgroundCondition condition) {
             var status = await BackgroundExecutionManager.RequestAccessAsync();
-            if (status == BackgroundAccessStatus.Unspecified || status == BackgroundAccessStatus.Denied)
+            if (status == BackgroundAccessStatus.Unspecified || status == BackgroundAccessStatus.DeniedByUser)
             {
                 return null;
             }
