@@ -54,11 +54,10 @@ namespace CheckPointApplication
         {
             coreWindow = CoreWindow.GetForCurrentThread();
             coreWindow.VisibilityChanged += CoreWindow_VisibilityChanged;
-
-
             this.InitializeComponent();
             viewModel = new PointOfInterestsManager();
             MapIcon mapIcon1 = new MapIcon();
+            
         }
 
         private void CoreWindow_VisibilityChanged(CoreWindow sender, VisibilityChangedEventArgs args)
@@ -193,33 +192,32 @@ namespace CheckPointApplication
                 };
                 await viewNotSupportedDialog.ShowAsync();
                 Point t = MapControl.RenderTransformOrigin;
-
             }
-
 
         }
 
         private async void MapControl_MapTapped(MapControl sender, MapInputEventArgs args)
         {
 
-            list = await viewModel.FetchPOIs(args.Location);
-            this.DataContext = list;
-            //if (locs.Count == 2)
-            //{
-            //    locs.Clear();
-            //}
-            //MapIcon mapicon1 = new MapIcon();
-            //mapicon1.Location = args.Location;
-            //mapicon1.NormalizedAnchorPoint = new Point(0.5, 1.0);
-            //mapicon1.Title = "space needle";
-            //mapicon1.ZIndex = 0;
-            //locs.Add(args.Location);
-            //  sender.MapElements.Add(mapicon1);
+            // list = await viewModel.FetchPOIs(args.Location);
+            //  this.DataContext = list;
+            if (locs.Count == 2)
+            {
+                locs.Clear();
+            }
+            MapIcon mapicon1 = new MapIcon();
+            mapicon1.Location = args.Location;
+            mapicon1.NormalizedAnchorPoint = new Point(0.5, 1.0);
+            mapicon1.Title = "space needle";
+            mapicon1.ZIndex = 0;
+            locs.Add(args.Location);
+            sender.MapElements.Add(mapicon1);
             await MapControl.TrySetViewAsync(args.Location);
-            //if (locs.Count == 2)
-            //{
-            //    DrawLineWith(locs.First().Position, locs.Last().Position);
-            //}
+
+            if (locs.Count == 2)
+            {
+                DrawLineWith(locs.First().Position, locs.Last().Position);
+            }
 
         }
         private void AddMapIcon(Geopoint point, MapControl sender)
